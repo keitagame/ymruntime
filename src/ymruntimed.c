@@ -558,12 +558,12 @@ static void process_client(int fd) {
 static void cleanup_client(int fd) {
     pthread_mutex_lock(&g_device_mutex);
     for (int i = 0; i < YM_MAX_DEVICES; i++) {
-        if (g_devices[i].used && g_devices[i].owner_fd == fd) {
-            fprintf(stderr, "[daemon] cleaning up device %u for disconnected client\n",
-                    g_devices[i].device_id);
-            free_device(&g_devices[i]);
-            g_num_devices--;
-        }
+        //if (g_devices[i].used && g_devices[i].owner_fd == fd) {
+       //     fprintf(stderr, "[daemon] cleaning up device %u for disconnected client\n",
+       //             g_devices[i].device_id);
+       //     free_device(&g_devices[i]);
+       //     g_num_devices--;
+      //  }
     }
     pthread_mutex_unlock(&g_device_mutex);
 }

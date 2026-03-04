@@ -26,15 +26,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#define _POSIX_C_SOURCE 199309L
 #include <time.h>
-
+#include <sys/select.h>
 #include "ymclient.h"
 #include "ym_ipc.h"
-
 static void msleep(int ms) {
-    struct timespec ts = { ms / 1000, (ms % 1000) * 1000000L };
-    nanosleep(&ts, NULL);
+    struct timeval tv;
+    tv.tv_sec  = ms / 1000;
+    tv.tv_usec = (ms % 1000) * 1000;
+    select(0, NULL, NULL, NULL, &tv);
 }
+
 
 /* ymctl内部の簡易送受信 (shutdownコマンド用) */
 static int ctl_send_cmd(ym_client_t *c, ym_command_t cmd) {

@@ -116,22 +116,36 @@ int ym_send_packet(int fd, ym_command_t cmd, uint16_t seq,
 
 int ym_recv_packet(int fd, ym_pkt_header_t *hdr,
                    void *payload_buf, size_t buf_size) {
-    /* ヘッダ受信 */
-    ssize_t n = read(fd, hdr, sizeof(*hdr));
-    if (n <= 0) return -1;
-    if ((size_t)n != sizeof(*hdr)) return -1;
+    /* ヘッダ受信：必ず sizeof(*hdr) バイト読む */
+    uint8_t *hp = (uint8_t *)hdr;
+    size_t got = 0;
+    while (got < sizeof(*hdr)) {
+        ssize_t n = read(fd, hp + got, sizeof(*hdr) - got);
+        if (n < 0) {
+            if (errno == EINTR) continue;  /* シグナル割り込みは再試行 */
+            return -1;
+        }
+        if (n == 0) return -1;            /* EOF */
+        got += (size_t)n;
+    }
 
     /* マジック確認 */
-    if (hdr->magic != YM_PROTO_MAGIC) return -1;
+    if (hdr->magic != YM_PROTO_MAGIC)
+        return -1;
 
-    /* ペイロード受信 */
+    /* ペイロード受信：同じく全部読む */
     if (hdr->payload_len > 0) {
-        if (hdr->payload_len > buf_size) return -1;
+        if (hdr->payload_len > buf_size)
+            return -1;
         uint8_t *p = (uint8_t *)payload_buf;
         size_t received = 0;
         while (received < hdr->payload_len) {
-            n = read(fd, p + received, hdr->payload_len - received);
-            if (n <= 0) return -1;
+            ssize_t n = read(fd, p + received, hdr->payload_len - received);
+            if (n < 0) {
+                if (errno == EINTR) continue;
+                return -1;
+            }
+            if (n == 0) return -1;
             received += (size_t)n;
         }
     }

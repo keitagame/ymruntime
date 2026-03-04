@@ -1,0 +1,30 @@
+[Unit]
+Description=YM FM Sound Runtime Daemon (YM2203/YM2151 Emulator)
+Documentation=https://github.com/yourname/ymruntime
+After=network.target pulseaudio.service sound.target
+Wants=pulseaudio.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/ymruntimed -f
+ExecStop=/usr/local/bin/ymctl shutdown
+Restart=on-failure
+RestartSec=3
+
+# オーディオアクセス
+Environment=PULSE_SERVER=unix:/run/user/1000/pulse/native
+SupplementaryGroups=audio
+
+# ソケットパス
+Environment=YM_RUNTIME_SOCKET=/tmp/ymruntime.sock
+
+# リアルタイム優先度 (オーディオスレッド用)
+LimitRTPRIO=95
+LimitMEMLOCK=infinity
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ymruntimed
+
+[Install]
+WantedBy=default.target
